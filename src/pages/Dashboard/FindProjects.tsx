@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Search, Filter } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { toast } from 'react-hot-toast';
-import ConfirmDialog from './ConfirmDialog';
+import ConfirmDialog from './ConfirmDialog' ;
 import { ProjectOwnerProfile } from './ProjectOwnerProfile';
 import { User } from '../../types';
 import { getUserIdFromToken } from '../../services/authService';
@@ -27,6 +27,10 @@ interface ProjectOwnerProfile extends User {
 }
 
 interface ProjectDisplay extends ProjectOwnerProfile {
+  title: any;
+  description: any;
+  fullName: string;
+  userId: any;
   projectTitle: string;
   projectDescription: string;
   domain: string;
@@ -117,6 +121,11 @@ const FindProjects: React.FC = () => {
   const [projects, setProjects] = useState<ProjectDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Add state for dynamic filter options
+  const [domainOptions, setDomainOptions] = useState<any[]>([]);
+  const [typeOptions, setTypeOptions] = useState<any[]>([]);
+  const [skillOptions, setSkillOptions] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -126,23 +135,29 @@ const FindProjects: React.FC = () => {
           throw new Error('Failed to fetch projects');
         }
         const data: ProjectOwnerProfile[] = await response.json();
-        // console.log(data)
-        // Transform Powner data to ProjectDisplay format
-        const transformedProjects = data.map(project => ({
+        
+        // Transform Powner data to ProjectDisplay format with all required properties
+        const transformedProjects: ProjectDisplay[] = data.map(project => ({
           ...project,
+          fullName: project.name || '',  // Ensure fullName is set
+          userId: project.id,            // Set userId to the project's id
+          projectId: project.id,
           projectTitle: project.proTitle,
           projectDescription: project.proDes,
+          // Add the missing title and description properties
+          title: project.proTitle,       // Set title to match projectTitle
+          description: project.proDes,   // Set description to match projectDescription
           domain: project.reqProjectDomain,
           projectType: project.proType,
-          requiredSkills: project.reqSkills.split(',').map((skills: string) => skills.trim()),
+          requiredSkills: project.reqSkills ? project.reqSkills.split(',').map((skill: string) => skill.trim()) : [],
           timeRequired: `${project.timeNeedValue} ${project.timeUnit}`,
           additionalRequirements: project.addReq || ''
         }));
 
-        setProjects(transformedProjects.map(project => ({
-          ...project,
-          additionalRequirements: project.addReq || ''
-        })));
+        setProjects(transformedProjects);
+        
+        // Generate dynamic filter options from the fetched projects
+        generateFilterOptions(transformedProjects);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
         toast.error('Failed to fetch projects');
@@ -153,6 +168,51 @@ const FindProjects: React.FC = () => {
 
     fetchProjects();
   }, []);
+  
+  // Function to generate filter options from projects
+  const generateFilterOptions = (projects: ProjectDisplay[]) => {
+    // Extract unique domains
+    const domains = new Set<string>();
+    // Extract unique project types
+    const types = new Set<string>();
+    // Extract unique skills
+    const skills = new Set<string>();
+    
+    projects.forEach(project => {
+      // Add domain if it exists
+      if (project.domain) {
+        domains.add(project.domain.toLowerCase());
+      }
+      
+      // Add project type if it exists
+      if (project.projectType) {
+        types.add(project.projectType.toLowerCase());
+      }
+      
+      // Add all skills
+      project.requiredSkills.forEach(skill => {
+        if (skill) {
+          skills.add(skill.toLowerCase());
+        }
+      });
+    });
+    
+    // Convert sets to option arrays for react-select
+    setDomainOptions(Array.from(domains).map(domain => ({
+      value: domain,
+      label: domain.charAt(0).toUpperCase() + domain.slice(1) // Capitalize first letter
+    })));
+    
+    setTypeOptions(Array.from(types).map(type => ({
+      value: type,
+      label: type.charAt(0).toUpperCase() + type.slice(1) // Capitalize first letter
+    })));
+    
+    setSkillOptions(Array.from(skills).map(skill => ({
+      value: skill,
+      label: skill.charAt(0).toUpperCase() + skill.slice(1) // Capitalize first letter
+    })));
+  };
 
   const selectStyles = {
     control: (base: any) => ({
@@ -206,10 +266,17 @@ const FindProjects: React.FC = () => {
 
   useEffect(() => {
     const fetchPendingRequests = async () => {
+      var a = getUserIdFromToken()
+      console.log(a)
       try {
-        const response = await axios.get(`http://localhost:5247/api/request/sent/${getUserIdFromToken()}`);
-        const pendingRequestIds = response.data.map((request: any) => request.receiverId);
-        setPendingRequests(new Set(pendingRequestIds));
+        const response = await fetch(`http://localhost:5247/api/request/sent/${a}`);
+        if (response.ok) {
+          const data = await response.json();
+          const pendingRequestIds = data.map((request: any) => request.receiverId);
+          setPendingRequests(new Set(pendingRequestIds));
+        } else {
+          throw new Error('Failed to fetch pending requests');
+        }
       } catch (err) {
         console.error('Error fetching pending requests:', err);
         toast.error('Failed to load pending requests');
@@ -230,17 +297,54 @@ const FindProjects: React.FC = () => {
   
   const confirmRequest = async () => {
     if (!selectedProject) return;
+    
+    // Use userId instead of id for the receiverId
+    const requestData = {
+      senderId: (getUserIdFromToken()),
+      receiverId: parseInt(selectedProject.userId.toString()), // Use userId instead of id
+      senderRole: 'contributor'
+    };
+    
+    console.log("Sending request with data:", requestData);
+    
+    if (isNaN(requestData.receiverId)) {
+      toast.error('Invalid project owner ID');
+      return;
+    }
   
     try {
-      // console.log(selectedProject.id)
-      await axios.post('http://localhost:5247/api/request/send', {
-        senderId: getUserIdFromToken(),
-        receiverId: selectedProject.id,
-        senderRole: 'contributor'
+      const response = await fetch('http://localhost:5247/api/request/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
       });
+      
+      const responseText = await response.text();
+      console.log("Server response:", responseText);
+      
+      if (!response.ok) {
+        // Handle specific error cases
+        if (responseText.includes("Request already sent")) {
+          toast.success("You've already sent a request to this project owner", {
+            icon: 'ℹ️',
+          });
+          setShowConfirmDialog(false);
+          return;
+        } else if (responseText.includes("Collaboration already exists")) {
+          toast.success("You're already collaborating on this project", {
+            icon: 'ℹ️',
+          });
+          setShowConfirmDialog(false);
+          // Here we could redirect to collaborations page if needed
+          return;
+        }
+        throw new Error('Failed to send request');
+      }
   
-      setPendingRequests(prev => new Set([...prev, selectedProject.id]));
-      toast.success(`Request sent to ${selectedProject.name}`);
+      setPendingRequests(prev => new Set([...prev, selectedProject.userId.toString()]));
+      toast.success(`Request sent to ${selectedProject.fullName || selectedProject.name}`);
       setShowConfirmDialog(false);
     } catch (error) {
       console.error('Error sending request:', error);
@@ -252,23 +356,43 @@ const FindProjects: React.FC = () => {
     return requestStatuses.find(req => req.projectId === projectId);
   };
 
+  // Update the search functionality to include domain and skills
+  // Add null checks to the filter function in FindProjects.tsx
+  // This is around line 355-365 based on the error
+  
+  // Add the missing state variable
+  const [selectedExperienceLevel, setSelectedExperienceLevel] = useState<any>(null);
+  
+  // OR modify the filteredProjects function to remove the reference
+  
   const filteredProjects = projects.filter((project) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      project.projectTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.projectDescription.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesDomain = !selectedDomain || project.domain.toLowerCase() === selectedDomain.value;
-
-    const matchesType = !selectedType || project.projectType.toLowerCase() === selectedType.value;
-
-    const matchesSkills =
-      selectedSkills.length === 0 ||
-      selectedSkills.every((selected) =>
-        project.requiredSkills.some((skill) => skill.toLowerCase().includes(selected.value))
+  const matchesSearch = searchQuery === '' ||
+      (project.title && project.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (project.domain && project.domain.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (project.requiredSkills && project.requiredSkills.some(skill => 
+          skill && skill.toLowerCase().includes(searchQuery.toLowerCase())
+      ));
+  
+  const matchesDomain = !selectedDomain ||
+      (project.domain && project.domain.toLowerCase() === selectedDomain.value);
+  
+  // Remove this condition since selectedExperienceLevel is not defined
+  // const matchesExperience = !selectedExperienceLevel ||
+  //     (project.experienceLevel && project.experienceLevel.toLowerCase() === selectedExperienceLevel.value);
+  
+  const matchesType = !selectedType ||
+      (project.projectType && project.projectType.toLowerCase() === selectedType.value);
+  
+  const matchesSkills = selectedSkills.length === 0 ||
+      selectedSkills.every(selected =>
+          project.requiredSkills && project.requiredSkills.some(skill =>
+              skill && skill.toLowerCase().includes(selected.value)
+          )
       );
-
-    return matchesSearch && matchesDomain && matchesType && matchesSkills;
+  
+  // Remove matchesExperience from the return statement
+  return matchesSearch && matchesDomain && matchesType && matchesSkills;
   });
 
   if (isLoading) {
@@ -311,7 +435,7 @@ const FindProjects: React.FC = () => {
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-200">Domain</label>
             <Select
-              options={projectOptions}
+              options={domainOptions}
               value={selectedDomain}
               onChange={setSelectedDomain}
               styles={selectStyles}
@@ -331,14 +455,14 @@ const FindProjects: React.FC = () => {
             />
           </div>
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-gray-200">Your Skills</label>
+            <label className="mb-2 block text-sm font-medium text-gray-200">Required Skills</label>
             <Select
               isMulti
               options={skillOptions}
               value={selectedSkills}
               onChange={(newValue) => setSelectedSkills([...newValue])}
               styles={selectStyles}
-              placeholder="Select your skills"
+              placeholder="Select required skills"
             />
           </div>
         </div>

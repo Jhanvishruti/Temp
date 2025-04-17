@@ -27,20 +27,10 @@ export const ProjectCollaborations: React.FC = () => {
     const fetchCollaborations = async () => {
       try {
         const userId = getUserIdFromToken();
-        const response = await axios.get(`http://localhost:5247/api/collaboration/${userId}`);
-        console.log(response.data)
-        const data = Array.isArray(response.data) ? response.data.map(collab => ({
-          id: collab.id,
-          pownerId : collab.pownerId,
-          contributorId: collab.contributorIds?.[0] || '',
-          contributorName: collab.contributorName || 'Unknown',
-          contributorImage: collab.contributorImage || '',
-          projectTitle: collab.projectTitle || 'Untitled Project',
-          startDate: collab.startedAt || '',
-          status: collab.isActive ? 'active' : 'completed'
-        })) : [];
-        setCollaborations(data as Collaboration[]);
-        setUserRole(data[0]?.pownerId === userId ? 'powner' : 'contributor');
+        const response = await axios.get(`http://localhost:5247/api/collaboration/user/${userId}`);
+        const data = Array.isArray(response.data) ? response.data : [];
+        setCollaborations(data);
+        setUserRole(data[0]?.ownerId === userId ? 'powner' : 'contributor');
       } catch (err) {
         setError('Failed to fetch collaborations');
         toast.error('Failed to load collaborations');
