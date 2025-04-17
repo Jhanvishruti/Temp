@@ -26,7 +26,7 @@ export const ProjectCollaborations: React.FC = () => {
     const fetchCollaborations = async () => {
       try {
         const userId = getUserIdFromToken();
-        const response = await axios.get(`http://localhost:5247/api/collaboration/${userId}`);
+        const response = await axios.get(`http://localhost:5247/api/collaboration/user/${userId}`);
         const data = Array.isArray(response.data) ? response.data : [];
         setCollaborations(data);
         setUserRole(data[0]?.ownerId === userId ? 'powner' : 'contributor');

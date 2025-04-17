@@ -301,7 +301,7 @@ export const SignupProjectOwner: React.FC = () => {
           FullName: profileData.name, // Changed from Name to FullName to match API expectation
           ProTitle: profileData.projectTitle,
           ProDes: profileData.projectDescription,
-          ReqProjectDomain: profileData.projectDomains.map(d => d.label).join(', '),
+          ReqProjectDomains: profileData.projectDomains.map(d => d.label).join(', '),
           ReqSkills: profileData.requiredSkills.map(s => s.label).join(', '),
           ProType: profileData.projectType?.value,
           CollabMode: profileData.collaborationMode?.value,

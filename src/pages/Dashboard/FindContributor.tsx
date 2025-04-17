@@ -77,7 +77,21 @@ interface RequestNotification {
     motivation: string;
 }
 
+// Replace the static filter options with dynamic ones generated from the data
+
+// Remove these static options
+// const availabilityOptions = [...]
+// const domainOptions = [...]
+// const experienceLevelOptions = [...]
+// const skillOptions = [...]
+
 const FindContributors: React.FC = () => {
+    // Add these new state variables for dynamic options
+    const [availabilityOptions, setAvailabilityOptions] = useState<any[]>([]);
+    const [domainOptions, setDomainOptions] = useState<any[]>([]);
+    const [experienceLevelOptions, setExperienceLevelOptions] = useState<any[]>([]);
+    const [skillOptions, setSkillOptions] = useState<any[]>([]);
+    
     const [contributors, setContributors] = useState<Contributor[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -93,6 +107,56 @@ const FindContributors: React.FC = () => {
     const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
     const [acceptedRequests, setAcceptedRequests] = useState<Set<string>>(new Set());
 
+    // Move the generateFilterOptions function inside the component
+    const generateFilterOptions = (contributors: Contributor[]) => {
+        // Extract unique values for each filter
+        const availabilities = new Set<string>();
+        const domains = new Set<string>();
+        const experienceLevels = new Set<string>();
+        const skills = new Set<string>();
+        
+        contributors.forEach(contributor => {
+            if (contributor.availability) {
+                availabilities.add(contributor.availability.toLowerCase());
+            }
+            
+            if (contributor.preferredDomain) {
+                domains.add(contributor.preferredDomain.toLowerCase());
+            }
+            
+            if (contributor.experienceLevel) {
+                experienceLevels.add(contributor.experienceLevel.toLowerCase());
+            }
+            
+            contributor.skills.forEach(skill => {
+                if (skill) {
+                    skills.add(skill.toLowerCase());
+                }
+            });
+        });
+        
+        // Convert sets to option arrays for react-select
+        setAvailabilityOptions(Array.from(availabilities).map(availability => ({
+            value: availability,
+            label: availability.charAt(0).toUpperCase() + availability.slice(1) // Capitalize first letter
+        })));
+        
+        setDomainOptions(Array.from(domains).map(domain => ({
+            value: domain,
+            label: domain.charAt(0).toUpperCase() + domain.slice(1)
+        })));
+        
+        setExperienceLevelOptions(Array.from(experienceLevels).map(level => ({
+            value: level,
+            label: level.charAt(0).toUpperCase() + level.slice(1)
+        })));
+        
+        setSkillOptions(Array.from(skills).map(skill => ({
+            value: skill,
+            label: skill.charAt(0).toUpperCase() + skill.slice(1)
+        })));
+    };
+
     // Fetch contributors from the backend API
     useEffect(() => {
         const fetchContributors = async () => {
@@ -106,7 +170,7 @@ const FindContributors: React.FC = () => {
                     profilePicture: contributor.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80', // Default image if none provided
                     name: contributor.name,
                     email: contributor.email,
-                    skills: contributor.skills ? contributor.skills.split(',') : [],
+                    skills: contributor.skills ? contributor.skills.split(',').map((s: string) => s.trim()) : [],
                     experienceLevel: contributor.experienceLevel,
                     preferredDomain: contributor.preferredDomain,
                     availability: contributor.availability,
@@ -119,6 +183,10 @@ const FindContributors: React.FC = () => {
                 }));
                 
                 setContributors(mappedContributors);
+                
+                // Generate dynamic filter options from the data
+                generateFilterOptions(mappedContributors);
+                
                 setError(null);
             } catch (err) {
                 console.error('Error fetching contributors:', err);
@@ -225,28 +293,29 @@ const FindContributors: React.FC = () => {
     
     
 
+    // Update the filteredContributors function to handle undefined values
     const filteredContributors = contributors.filter((contributor) => {
         const matchesSearch = searchQuery === '' ||
-            contributor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            contributor.experienceLevel.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            contributor.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
-
+            (contributor.name && contributor.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (contributor.experienceLevel && contributor.experienceLevel.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (contributor.skills && contributor.skills.some(skill => skill && skill.toLowerCase().includes(searchQuery.toLowerCase())));
+    
         const matchesAvailability = !selectedAvailability ||
-            contributor.availability.toLowerCase() === selectedAvailability.value;
-
+            (contributor.availability && contributor.availability.toLowerCase() === selectedAvailability.value);
+    
         const matchesDomain = !selectedDomain ||
-            contributor.preferredDomain.toLowerCase().includes(selectedDomain.value);
-
+            (contributor.preferredDomain && contributor.preferredDomain.toLowerCase().includes(selectedDomain.value));
+    
         const matchesExperience = !selectedExperienceLevel ||
-            contributor.experienceLevel.toLowerCase() === selectedExperienceLevel.value;
-
+            (contributor.experienceLevel && contributor.experienceLevel.toLowerCase() === selectedExperienceLevel.value);
+    
         const matchesSkills = selectedSkills.length === 0 ||
             selectedSkills.every(selected =>
-                contributor.skills.some(skill =>
-                    skill.toLowerCase().includes(selected.value)
+                contributor.skills && contributor.skills.some(skill =>
+                    skill && skill.toLowerCase().includes(selected.value)
                 )
             );
-
+    
         return matchesSearch && matchesAvailability && matchesDomain &&
             matchesExperience && matchesSkills;
     });

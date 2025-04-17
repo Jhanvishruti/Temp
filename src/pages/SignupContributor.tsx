@@ -296,7 +296,7 @@ export const SignupContributor: React.FC = () => {
           ExperienceLevel: profileData.experienceLevel?.value || '',
           TimeCommitmentValue: parseInt(profileData.timeCommitmentValue) || 0,
           TimeUnit: profileData.timeCommitmentUnit?.value || '',
-          HoursPerDay: parseInt(profileData.hoursPerDay) || 0,
+          HoursPerDay: (profileData.hoursPerDay) || "0",
           Availability: profileData.availability?.value || '',
           PreferredCollabType: profileData.preferredCollaboration?.value || '',
           LinkedInProfileUrl: profileData.linkedinUrl || '',

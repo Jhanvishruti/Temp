@@ -99,250 +99,444 @@ const Profile: React.FC = () => {
     }
   };
 
+  // Add this helper function to safely access profile properties
+  const getValueOrDefault = (obj: any, key: string, defaultValue: any = '') => {
+    if (!obj) return defaultValue;
+    return obj[key] !== undefined && obj[key] !== null ? obj[key] : defaultValue;
+  };
+
+  // Update the renderContributorProfile function to match your JSON data structure
   const renderContributorProfile = (profile: ContributorProfile) => (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Skills</label>
-        <input
-          type="text"
-          name="skills"
-          value={profile.skills}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        />
-      </div>
+    <div className="space-y-8">
+      {/* Skills & Experience Section */}
+      <div className="rounded-lg border border-gray-700 bg-black/10 p-5">
+        <h3 className="mb-4 text-lg font-medium text-blue-400">Skills & Experience</h3>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Skills</label>
+            <input
+              type="text"
+              name="skills"
+              value={getValueOrDefault(profile, 'skills')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Experience Level</label>
-        <select
-          name="experienceLevel"
-          value={profile.experienceLevel}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        >
-          <option value="Beginner">Beginner</option>
-          <option value="Intermediate">Intermediate</option>
-          <option value="Expert">Expert</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Preferred Project Domain</label>
-        <input
-          type="text"
-          name="preferredProjectDomain"
-          value={profile.preferredProjectDomain}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Availability</label>
-        <select
-          name="availability"
-          value={profile.availability}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        >
-          <option value="Full-time">Full-time</option>
-          <option value="Part-time">Part-time</option>
-          <option value="Weekend only">Weekend only</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Preferred Collaboration Type</label>
-        <select
-          name="preferredCollabType"
-          value={profile.preferredCollabType}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        >
-          <option value="Remote">Remote</option>
-          <option value="In-person">In-person</option>
-          <option value="Hybrid">Hybrid</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Hours Per Day</label>
-        <input
-          type="text"
-          name="hoursPerDay"
-          value={profile.hoursPerDay}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        />
-      </div>
-
-      <div className="md:col-span-2">
-        <label className="block text-sm font-medium text-gray-200">Why Contribute</label>
-        <textarea
-          name="whyContribute"
-          value={profile.whyContribute}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          rows={4}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Social Links</label>
-        <div className="mt-2 flex gap-4">
-          {profile.linkedInProfileUrl && (
-            <a
-              href={profile.linkedInProfileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-blue-400 hover:text-blue-300"
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Experience Level</label>
+            <select
+              name="experienceLevel"
+              value={getValueOrDefault(profile, 'experienceLevel', 'Beginner')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
             >
-              <Linkedin className="h-5 w-5" />
-              LinkedIn
-            </a>
-          )}
-          {profile.gitHubProfileUrl && (
-            <a
-              href={profile.gitHubProfileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-gray-400 hover:text-gray-300"
-            >
-              <Github className="h-5 w-5" />
-              GitHub
-            </a>
-          )}
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Expert">Expert</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Preferred Project Domain</label>
+            <input
+              type="text"
+              name="preferredProjectDomain"
+              value={getValueOrDefault(profile, 'preferredProjectDomain')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
         </div>
+      </div>
+      
+      {/* Availability & Preferences Section */}
+      <div className="rounded-lg border border-gray-700 bg-black/10 p-5">
+        <h3 className="mb-4 text-lg font-medium text-blue-400">Availability & Preferences</h3>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Availability</label>
+            <select
+              name="availability"
+              value={getValueOrDefault(profile, 'availability', 'Full-time')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            >
+              <option value="Full-time">Full-time</option>
+              <option value="Part-time">Part-time</option>
+              <option value="Weekend only">Weekend only</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Preferred Collaboration Type</label>
+            <select
+              name="preferredCollabType"
+              value={getValueOrDefault(profile, 'preferredCollabType', 'Remote')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            >
+              <option value="Remote">Remote</option>
+              <option value="In-person">In-person</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Time Commitment</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                name="timeCommitmentValue"
+                value={getValueOrDefault(profile, 'timeCommitmentValue', 0)}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+              />
+              <select
+                name="timeUnit"
+                value={getValueOrDefault(profile, 'timeUnit', 'months')}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+              >
+                <option value="days">Days</option>
+                <option value="weeks">Weeks</option>
+                <option value="months">Months</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Hours Per Day</label>
+            <input
+              type="text"
+              name="hoursPerDay"
+              value={getValueOrDefault(profile, 'hoursPerDay')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Motivation Section */}
+      <div className="rounded-lg border border-gray-700 bg-black/10 p-5">
+        <h3 className="mb-4 text-lg font-medium text-blue-400">Motivation</h3>
+        <div>
+          <label className="block text-sm font-medium text-gray-200">Why Contribute</label>
+          <textarea
+            name="whyContribute"
+            value={getValueOrDefault(profile, 'whyContribute')}
+            onChange={handleInputChange}
+            disabled={!isEditing}
+            rows={4}
+            className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+          />
+        </div>
+      </div>
+
+      {/* Professional Links Section */}
+      <div className="rounded-lg border border-gray-700 bg-black/10 p-5">
+        <h3 className="mb-4 text-lg font-medium text-blue-400">Professional Links</h3>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-200">LinkedIn Profile</label>
+            <input
+              type="url"
+              name="linkedInProfileUrl"
+              value={getValueOrDefault(profile, 'linkedInProfileUrl')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white overflow-hidden text-ellipsis"
+              style={{ minHeight: '42px', height: 'auto' }}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-200">GitHub Profile</label>
+            <input
+              type="url"
+              name="gitHubProfileUrl"
+              value={getValueOrDefault(profile, 'gitHubProfileUrl')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white overflow-hidden text-ellipsis"
+              style={{ minHeight: '42px', height: 'auto' }}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Resume Link</label>
+            <input
+              type="url"
+              name="resumeGoogleDriveLink"
+              value={getValueOrDefault(profile, 'resumeGoogleDriveLink')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white overflow-hidden text-ellipsis"
+              style={{ minHeight: '42px', height: 'auto' }}
+            />
+          </div>
+        </div>
+        {/* Removing the social media links display section */}
+        {/* <div className="mt-4">
+          <div className="flex gap-4">
+            {profile.linkedInProfileUrl && (
+              <a
+                href={profile.linkedInProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-blue-400 hover:text-blue-300"
+              >
+                <Linkedin className="h-5 w-5" />
+                LinkedIn
+              </a>
+            )}
+            {profile.gitHubProfileUrl && (
+              <a
+                href={profile.gitHubProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-400 hover:text-gray-300"
+              >
+                <Github className="h-5 w-5" />
+                GitHub
+              </a>
+            )}
+          </div>
+        </div> */}
       </div>
     </div>
   );
 
+  // Update the renderProjectOwnerProfile function to display all fields
   const renderProjectOwnerProfile = (profile: ProjectOwnerProfile) => (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Project Title</label>
-        <input
-          type="text"
-          name="proTitle"
-          value={profile.proTitle}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        />
-      </div>
+    <div className="space-y-8">
+      {/* Project Information Section */}
+      <div className="rounded-lg border border-gray-700 bg-black/10 p-5">
+        <h3 className="mb-4 text-lg font-medium text-blue-400">Project Information</h3>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Project Title</label>
+            <input
+              type="text"
+              name="proTitle"
+              value={getValueOrDefault(profile, 'proTitle')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Project Type</label>
-        <select
-          name="proType"
-          value={profile.proType}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        >
-          <option value="Personal">Personal</option>
-          <option value="Startup">Startup</option>
-          <option value="College">College</option>
-          <option value="Open Source">Open Source</option>
-        </select>
-      </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Project Type</label>
+            <select
+              name="proType"
+              value={getValueOrDefault(profile, 'proType', 'Personal')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            >
+              <option value="Personal">Personal</option>
+              <option value="Startup">Startup</option>
+              <option value="College">College</option>
+              <option value="Open Source">Open Source</option>
+            </select>
+          </div>
 
-      <div className="md:col-span-2">
-        <label className="block text-sm font-medium text-gray-200">Project Description</label>
-        <textarea
-          name="proDes"
-          value={profile.proDes}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          rows={4}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        />
-      </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Project Domain</label>
+            <input
+              type="text"
+              name="reqProjectDomain"
+              value={getValueOrDefault(profile, 'reqProjectDomain')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white overflow-hidden text-ellipsis"
+              title={getValueOrDefault(profile, 'reqProjectDomain')}
+            />
+          </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Required Skills</label>
-        <input
-          type="text"
-          name="reqSkills"
-          value={profile.reqSkills}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Collaboration Mode</label>
-        <select
-          name="collabMode"
-          value={profile.collabMode}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        >
-          <option value="Remote">Remote</option>
-          <option value="In-person">In-person</option>
-          <option value="Hybrid">Hybrid</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Time Required</label>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            name="timeNeedValue"
-            value={profile.timeNeedValue}
-            onChange={handleInputChange}
-            disabled={!isEditing}
-            className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-          />
-          <select
-            name="timeUnit"
-            value={profile.timeUnit}
-            onChange={handleInputChange}
-            disabled={!isEditing}
-            className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-          >
-            <option value="days">Days</option>
-            <option value="weeks">Weeks</option>
-            <option value="months">Months</option>
-          </select>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-200">Project Description</label>
+            <textarea
+              name="proDes"
+              value={getValueOrDefault(profile, 'proDes')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              rows={4}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Hours Per Day</label>
-        <input
-          type="number"
-          name="hoursPerDay"
-          value={profile.hoursPerDay}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        />
+      {/* Collaboration Requirements Section */}
+      <div className="rounded-lg border border-gray-700 bg-black/10 p-5">
+        <h3 className="mb-4 text-lg font-medium text-blue-400">Collaboration Requirements</h3>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Required Skills</label>
+            <input
+              type="text"
+              name="reqSkills"
+              value={getValueOrDefault(profile, 'reqSkills')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Collaboration Mode</label>
+            <select
+              name="collabMode"
+              value={getValueOrDefault(profile, 'collabMode', 'Remote')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            >
+              <option value="Remote">Remote</option>
+              <option value="In-person">In-person</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Time Required</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                name="timeNeedValue"
+                value={getValueOrDefault(profile, 'timeNeedValue', 0)}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+              />
+              <select
+                name="timeUnit"
+                value={getValueOrDefault(profile, 'timeUnit', 'months')}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+              >
+                <option value="days">Days</option>
+                <option value="weeks">Weeks</option>
+                <option value="months">Months</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Hours Per Day</label>
+            <input
+              type="number"
+              name="hoursPerDay"
+              value={getValueOrDefault(profile, 'hoursPerDay', 0)}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Compensation Type</label>
+            <select
+              name="compensationType"
+              value={getValueOrDefault(profile, 'compensationType', 'Unpaid')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            >
+              <option value="Paid">Paid</option>
+              <option value="Unpaid">Unpaid</option>
+              <option value="Equity-based">Equity-based</option>
+            </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-200">Additional Requirements</label>
+            <textarea
+              name="addReq"
+              value={getValueOrDefault(profile, 'addReq')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              rows={3}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
+        </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-200">Compensation Type</label>
-        <select
-          name="compensationType"
-          value={profile.compensationType}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
-        >
-          <option value="Paid">Paid</option>
-          <option value="Unpaid">Unpaid</option>
-          <option value="Equity-based">Equity-based</option>
-        </select>
+      {/* Professional Links Section */}
+      <div className="rounded-lg border border-gray-700 bg-black/10 p-5">
+        <h3 className="mb-4 text-lg font-medium text-blue-400">Professional Links</h3>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-200">LinkedIn Profile</label>
+            <input
+              type="url"
+              name="linkedInProfileUrl"
+              value={getValueOrDefault(profile, 'linkedInProfileUrl')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-200">GitHub Profile</label>
+            <input
+              type="url"
+              name="gitHubProfileUrl"
+              value={getValueOrDefault(profile, 'gitHubProfileUrl')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-200">Resume Link</label>
+            <input
+              type="url"
+              name="resumeGoogleDriveLink"
+              value={getValueOrDefault(profile, 'resumeGoogleDriveLink')}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white"
+            />
+          </div>
+        </div>
+        <div className="mt-4">
+          <div className="flex gap-4">
+            {profile.linkedInProfileUrl && (
+              <a
+                href={profile.linkedInProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-blue-400 hover:text-blue-300"
+              >
+                <Linkedin className="h-5 w-5" />
+                LinkedIn
+              </a>
+            )}
+            {profile.gitHubProfileUrl && (
+              <a
+                href={profile.gitHubProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-gray-400 hover:text-gray-300"
+              >
+                <Github className="h-5 w-5" />
+                GitHub
+              </a>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -381,16 +575,31 @@ const Profile: React.FC = () => {
 
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <img
-            src={profileData.profilePictureUrl}
-            alt="Profile"
-            className="h-20 w-20 rounded-full object-cover"
-          />
+          <div className="h-20 w-20 rounded-full border-2 border-gray-600 overflow-hidden flex items-center justify-center bg-gray-700">
+            {profileData?.profilePictureUrl ? (
+              <img
+                src={profileData.profilePictureUrl}
+                alt="Profile"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null; // Prevent infinite loop
+                  target.style.display = 'none';
+                  target.parentElement!.innerHTML = '<div class="flex items-center justify-center h-full w-full text-white text-xl font-bold">' + 
+                    (profileData.name?.charAt(0) || 'U') + '</div>';
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full w-full text-white text-xl font-bold">
+                {profileData?.name?.charAt(0) || 'U'}
+              </div>
+            )}
+          </div>
           <div className="space-y-2">
             <input
               type="text"
               name="name"
-              value={profileData.name}
+              value={getValueOrDefault(profileData, 'name', '')}
               onChange={handleInputChange}
               disabled={!isEditing}
               className="block text-lg font-medium text-white bg-transparent border-b border-transparent focus:border-gray-500 outline-none disabled:border-transparent"
@@ -398,7 +607,7 @@ const Profile: React.FC = () => {
             <input
               type="email"
               name="email"
-              value={profileData.email}
+              value={getValueOrDefault(profileData, 'email', '')}
               onChange={handleInputChange}
               disabled={!isEditing}
               className="block text-gray-400 bg-transparent border-b border-transparent focus:border-gray-500 outline-none disabled:border-transparent"
@@ -406,7 +615,8 @@ const Profile: React.FC = () => {
           </div>
         </div>
 
-        {profileData.type === 'contributor'
+        {/* Check if it's a contributor profile based on the type property */}
+        {(profileData as any).type === 'contributor'
           ? renderContributorProfile(profileData as ContributorProfile)
           : renderProjectOwnerProfile(profileData as ProjectOwnerProfile)
         }

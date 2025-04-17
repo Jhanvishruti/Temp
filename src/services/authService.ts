@@ -38,3 +38,35 @@ export const getUserRoleFromToken = (): string | null => {
     return null;
   }
 };
+
+// Add this new function to get the user type from the JWT token
+export const getUserType = (): 'contributor' | 'project-owner' | null => {
+  try {
+    const token = document.cookie.split('; ').find(row => row.startsWith('auth='))?.split('=')[1];
+    
+    if (!token) {
+      return null;
+    }
+    
+    // Decode the JWT token
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    const payload = JSON.parse(jsonPayload);
+    
+    // Check if the token has a role or type claim
+    if (payload.role) {
+      return payload.role === 'contributor' ? 'contributor' : 'project-owner';
+    } else if (payload.type) {
+      return payload.type === 'contributor' ? 'contributor' : 'project-owner';
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting user type:', error);
+    return null;
+  }
+};
