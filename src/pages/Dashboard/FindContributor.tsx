@@ -117,6 +117,7 @@ const FindContributors: React.FC = () => {
                     motivation: contributor.motivation,
                     resumeUrl: contributor.resumeUrl
                 }));
+                console.log(mappedContributors);
                 
                 setContributors(mappedContributors);
                 setError(null);

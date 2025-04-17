@@ -98,7 +98,7 @@ const Notifications: React.FC = () => {
                                 <div>
                                     <h3 className="text-lg font-medium text-white">{notification.name}</h3>
                                     <p className="text-sm text-gray-400">{notification.preferredDomain}</p>
-                                    <p className="text-sm text-gray-500">Expert in: {notification.skills.join(', ')}</p>
+                                    <p className="text-sm text-gray-500">Expert in: {notification.skills ? notification.skills.join(', ') : 'No skills listed'}</p>
                                 </div>
                             </div>
                             {notification.status === 'pending' && (
