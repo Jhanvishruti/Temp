@@ -1,67 +1,27 @@
 import { Edit2, Save, Github, Linkedin, Loader2 } from "lucide-react";
-import { ContributorProfile, ProjectOwnerProfile } from "../../types";
-import { Button } from "../../components/Button";
+import { Contributor, Owner } from "../../../types";
+import { Button } from "../../../components/Button";
 import toast from "react-hot-toast";
 import { useState, ChangeEvent, useEffect } from "react";
-import { getUserProfile, updateUserProfile } from "../../services/api";
-import { getUserIdFromToken, getUserRoleFromToken } from "../../services/authService";
-
-// const mockContributorData: ContributorProfile = {
-//   id: '1',
-//   profilePictureUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e',
-//   name: 'John Doe',
-//   email: 'john@example.com',
-//   type: 'contributor',
-//   skills: 'React, TypeScript, Node.js, GraphQL',
-//   experienceLevel: 'Expert',
-//   preferredProjectDomain: 'Web Development',
-//   availability: 'Full-time',
-//   preferredCollabType: 'Remote',
-//   timeCommitmentValue: 6,
-//   time: 'months',
-//   hoursPerDay: '8',
-//   linkedInProfileUrl: 'https://linkedin.com/in/johndoe',
-//   gitHubProfileUrl: 'https://github.com/johndoe',
-//   resumeGoogleDriveLink: 'https://drive.google.com/johndoe-resume',
-//   whyContribute: 'Passionate about building scalable web applications and contributing to innovative projects.'
-// };
-
-// const mockProjectOwnerData: ProjectOwnerProfile = {
-//   id: '2',
-//   profilePictureUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80',
-//   name: 'Jane Smith',
-//   email: 'jane@example.com',
-//   type: 'project-owner',
-//   proTitle: 'Innovative Web App',
-//   proDes: 'A cutting-edge web application using modern technologies',
-//   reqProjectDomain: 'Web Development',
-//   reqSkills: 'React, Node.js, AWS, MongoDB',
-//   proType: 'Startup',
-//   collabMode: 'Remote',
-//   timeNeedValue: 6,
-//   timeUnit: 'months',
-//   hoursPerDay: '6',
-//   linkedInProfileUrl: 'https://linkedin.com/in/janesmith',
-//   gitHubProfileUrl: 'https://github.com/janesmith',
-//   resumeGoogleDriveLink: 'https://drive.google.com/janesmith-resume',
-//   compensationType: 'Equity-based',
-//   addReq: 'Looking for passionate developers with experience in modern web technologies'
-// };
+import { getUserProfile, updateUserProfile } from "../../../services/api";
+import { getUserIdFromToken, getUserRoleFromToken } from "../../../services/authService";
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  // For demo purposes, hardcoded values - in real app, these would come from auth context
-  // Retrieve userType and userId from auth cookie
-  const userType = getUserRoleFromToken() || "contributor";
-  const userId = getUserIdFromToken() || 1;
 
-  const [profileData, setProfileData] = useState<ContributorProfile | ProjectOwnerProfile | null>(null);
+  // Retrieve userType and userId from auth cookie
+  const userType = getUserRoleFromToken()||"powner";
+  // console.log(userType)
+  const userId = getUserIdFromToken();
+
+  const [profileData, setProfileData] = useState<Contributor | Owner >();
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        // console.log(userType, userId)
         const data = await getUserProfile(userType, userId.toString());
         setProfileData(data);
       } catch (error) {
@@ -78,7 +38,7 @@ const Profile: React.FC = () => {
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProfileData(prev => ({
-      ...(prev as ContributorProfile | ProjectOwnerProfile),
+      ...(prev as Contributor | Owner),
       [name]: value
     }));
   };
@@ -106,7 +66,7 @@ const Profile: React.FC = () => {
   };
 
   // Update the renderContributorProfile function to match your JSON data structure
-  const renderContributorProfile = (profile: ContributorProfile) => (
+  const renderContributorProfile = (profile: Contributor) => (
     <div className="space-y-8">
       {/* Skills & Experience Section */}
       <div className="rounded-lg border border-gray-700 bg-black/10 p-5">
@@ -315,7 +275,7 @@ const Profile: React.FC = () => {
   );
 
   // Update the renderProjectOwnerProfile function to display all fields
-  const renderProjectOwnerProfile = (profile: ProjectOwnerProfile) => (
+  const renderProjectOwnerProfile = (profile: Owner) => (
     <div className="space-y-8">
       {/* Project Information Section */}
       <div className="rounded-lg border border-gray-700 bg-black/10 p-5">
@@ -524,9 +484,9 @@ const Profile: React.FC = () => {
                 LinkedIn
               </a>
             )}
-            {profile.gitHubProfileUrl && (
+            {profile.githubProfileUrl && (
               <a
-                href={profile.gitHubProfileUrl}
+                href={profile.githubProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-gray-400 hover:text-gray-300"
@@ -586,12 +546,12 @@ const Profile: React.FC = () => {
                   target.onerror = null; // Prevent infinite loop
                   target.style.display = 'none';
                   target.parentElement!.innerHTML = '<div class="flex items-center justify-center h-full w-full text-white text-xl font-bold">' + 
-                    (profileData.name?.charAt(0) || 'U') + '</div>';
+                    (profileData.fullName?.charAt(0) || 'U') + '</div>';
                 }}
               />
             ) : (
               <div className="flex items-center justify-center h-full w-full text-white text-xl font-bold">
-                {profileData?.name?.charAt(0) || 'U'}
+                {profileData?.fullName?.charAt(0) || 'U'}
               </div>
             )}
           </div>
@@ -617,8 +577,8 @@ const Profile: React.FC = () => {
 
         {/* Check if it's a contributor profile based on the type property */}
         {(profileData as any).type === 'contributor'
-          ? renderContributorProfile(profileData as ContributorProfile)
-          : renderProjectOwnerProfile(profileData as ProjectOwnerProfile)
+          ? renderContributorProfile(profileData as Contributor)
+          : renderProjectOwnerProfile(profileData as Owner)
         }
       </div>
     </div>

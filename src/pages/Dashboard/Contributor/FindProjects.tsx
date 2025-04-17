@@ -1,44 +1,30 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select';
-import axios from 'axios';
 import { Search, Filter } from 'lucide-react';
-import { Button } from '../../components/Button';
+import { Button } from '../../../components/Button';
 import { toast } from 'react-hot-toast';
-import ConfirmDialog from './ConfirmDialog' ;
+import ConfirmDialog from '../../../components/ConfirmDialog';
 import { ProjectOwnerProfile } from './ProjectOwnerProfile';
-import { User } from '../../types';
-import { getUserIdFromToken } from '../../services/authService';
+import { getUserIdFromToken } from '../../../services/authService';
+import { Owner } from '../../../types';
 
-interface ProjectOwnerProfile extends User {
-  proTitle: string;
-  proDes: string;
-  reqProjectDomain: string;
-  reqSkills: string;
-  proType: string;
-  collabMode: string;
-  timeNeedValue: number;
-  timeUnit: string;
-  hoursPerDay: string;
-  linkedInProfileUrl: string;
-  gitHubProfileUrl: string;
-  resumeGoogleDriveLink: string;
-  compensationType: string;
-  addReq: string;
-}
-
-interface ProjectDisplay extends ProjectOwnerProfile {
-  title: any;
-  description: any;
-  fullName: string;
+interface OwnerProfile extends Owner {
   userId: any;
-  projectTitle: string;
-  projectDescription: string;
-  domain: string;
-  projectType: string;
-  requiredSkills: string[];
-  timeRequired: string;
-  additionalRequirements: string;
 }
+
+// interface ProjectDisplay {
+//   userId: string;
+//   title: string;
+//   description: string;
+//   fullName: string;
+//   projectTitle: string;
+//   projectDescription: string;
+//   domain: string;
+//   projectType: string;
+//   requiredSkills: string[];
+//   timeRequired: string;
+//   additionalRequirements: string;
+// }
 
 
 // Mock data with expanded project owner details
@@ -111,17 +97,17 @@ interface RequestStatus {
 const FindProjects: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedDomain, setSelectedDomain] = useState<any>(null);
+  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<any>(null);
-  const [selectedSkills, setSelectedSkills] = useState<any[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<ProjectDisplay | null>(null);
+  const [selectedProject, setSelectedProject] = useState<OwnerProfile | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [requestStatuses, setRequestStatuses] = useState<RequestStatus[]>([]);
-  const [projects, setProjects] = useState<ProjectDisplay[]>([]);
+  const [projects, setProjects] = useState<OwnerProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Add state for dynamic filter options
   const [domainOptions, setDomainOptions] = useState<any[]>([]);
   const [typeOptions, setTypeOptions] = useState<any[]>([]);
@@ -134,28 +120,25 @@ const FindProjects: React.FC = () => {
         if (!response.ok) {
           throw new Error('Failed to fetch projects');
         }
-        const data: ProjectOwnerProfile[] = await response.json();
-        
+        const data: OwnerProfile[] = await response.json();
+
         // Transform Powner data to ProjectDisplay format with all required properties
-        const transformedProjects: ProjectDisplay[] = data.map(project => ({
+        const transformedProjects: OwnerProfile[] = data.map(project => ({
           ...project,
-          fullName: project.name || '',  // Ensure fullName is set
-          userId: project.id,            // Set userId to the project's id
-          projectId: project.id,
+          fullName: project.fullName || '',  // Ensure fullName is set
+          userId: project.userId,            // Set userId to the project's id
           projectTitle: project.proTitle,
           projectDescription: project.proDes,
-          // Add the missing title and description properties
           title: project.proTitle,       // Set title to match projectTitle
           description: project.proDes,   // Set description to match projectDescription
-          domain: project.reqProjectDomain,
+          domain: project.reqProjectDomains,
           projectType: project.proType,
-          requiredSkills: project.reqSkills ? project.reqSkills.split(',').map((skill: string) => skill.trim()) : [],
-          timeRequired: `${project.timeNeedValue} ${project.timeUnit}`,
+          requiredSkills: project.reqSkills ? project.reqSkills : [],
+          timeRequired: `${project.timeCommitValue} ${project.timeUnit}`,
           additionalRequirements: project.addReq || ''
         }));
-
         setProjects(transformedProjects);
-        
+
         // Generate dynamic filter options from the fetched projects
         generateFilterOptions(transformedProjects);
       } catch (err) {
@@ -168,46 +151,48 @@ const FindProjects: React.FC = () => {
 
     fetchProjects();
   }, []);
-  
+
   // Function to generate filter options from projects
-  const generateFilterOptions = (projects: ProjectDisplay[]) => {
+  const generateFilterOptions = (projects: OwnerProfile[]) => {
     // Extract unique domains
     const domains = new Set<string>();
     // Extract unique project types
     const types = new Set<string>();
     // Extract unique skills
     const skills = new Set<string>();
-    
+
     projects.forEach(project => {
       // Add domain if it exists
-      if (project.domain) {
-        domains.add(project.domain.toLowerCase());
+      if (Array.isArray(project.reqProjectDomains)) {
+        project.reqProjectDomains.forEach((domain: string) => domains.add(domain.toLowerCase()));
       }
-      
+
       // Add project type if it exists
-      if (project.projectType) {
-        types.add(project.projectType.toLowerCase());
+      if (project.proType) {
+        types.add(project.proType.toLowerCase());
       }
-      
+
       // Add all skills
-      project.requiredSkills.forEach(skill => {
-        if (skill) {
-          skills.add(skill.toLowerCase());
-        }
-      });
+      if (Array.isArray(project.reqSkills)) {
+        project.reqSkills.forEach(skill => {
+          if (skill) {
+            skills.add(skill.toLowerCase());
+          }
+        });
+      }
     });
-    
+
     // Convert sets to option arrays for react-select
     setDomainOptions(Array.from(domains).map(domain => ({
       value: domain,
       label: domain.charAt(0).toUpperCase() + domain.slice(1) // Capitalize first letter
     })));
-    
+
     setTypeOptions(Array.from(types).map(type => ({
       value: type,
       label: type.charAt(0).toUpperCase() + type.slice(1) // Capitalize first letter
     })));
-    
+
     setSkillOptions(Array.from(skills).map(skill => ({
       value: skill,
       label: skill.charAt(0).toUpperCase() + skill.slice(1) // Capitalize first letter
@@ -282,36 +267,29 @@ const FindProjects: React.FC = () => {
         toast.error('Failed to load pending requests');
       }
     };
-  
+
     fetchPendingRequests();
   }, []);
-  
-  const handleSendRequest = (project: ProjectDisplay) => {
-    if (pendingRequests.has(project.id)) {
+
+  const handleSendRequest = (project: OwnerProfile) => {
+    if (pendingRequests.has(project.userId)) {
       toast.error('Request already sent to this project');
       return;
     }
+    setPendingRequests(prev => new Set([...prev, project.userId.toString()]));
     setSelectedProject(project);
     setShowConfirmDialog(true);
   };
-  
+
   const confirmRequest = async () => {
     if (!selectedProject) return;
-    
-    // Use userId instead of id for the receiverId
     const requestData = {
       senderId: (getUserIdFromToken()),
-      receiverId: parseInt(selectedProject.userId.toString()), // Use userId instead of id
+      receiverId: selectedProject.userId,
       senderRole: 'contributor'
     };
-    
-    console.log("Sending request with data:", requestData);
-    
-    if (isNaN(requestData.receiverId)) {
-      toast.error('Invalid project owner ID');
-      return;
-    }
-  
+    // console.log("Sending request with data:", requestData);
+
     try {
       const response = await fetch('http://localhost:5247/api/request/send', {
         method: 'POST',
@@ -320,31 +298,22 @@ const FindProjects: React.FC = () => {
         },
         body: JSON.stringify(requestData)
       });
-      
+
       const responseText = await response.text();
-      console.log("Server response:", responseText);
-      
       if (!response.ok) {
         // Handle specific error cases
-        if (responseText.includes("Request already sent")) {
+        if (responseText.includes("Request already sent") || responseText.includes("Collaboration already exists")) {
           toast.success("You've already sent a request to this project owner", {
             icon: 'ℹ️',
           });
           setShowConfirmDialog(false);
           return;
-        } else if (responseText.includes("Collaboration already exists")) {
-          toast.success("You're already collaborating on this project", {
-            icon: 'ℹ️',
-          });
-          setShowConfirmDialog(false);
-          // Here we could redirect to collaborations page if needed
-          return;
         }
         throw new Error('Failed to send request');
       }
-  
+
       setPendingRequests(prev => new Set([...prev, selectedProject.userId.toString()]));
-      toast.success(`Request sent to ${selectedProject.fullName || selectedProject.name}`);
+      toast.success(`Request sent to ${selectedProject.fullName || selectedProject.fullName}`);
       setShowConfirmDialog(false);
     } catch (error) {
       console.error('Error sending request:', error);
@@ -356,43 +325,41 @@ const FindProjects: React.FC = () => {
     return requestStatuses.find(req => req.projectId === projectId);
   };
 
-  // Update the search functionality to include domain and skills
-  // Add null checks to the filter function in FindProjects.tsx
-  // This is around line 355-365 based on the error
-  
-  // Add the missing state variable
-  const [selectedExperienceLevel, setSelectedExperienceLevel] = useState<any>(null);
-  
-  // OR modify the filteredProjects function to remove the reference
-  
   const filteredProjects = projects.filter((project) => {
-  const matchesSearch = searchQuery === '' ||
-      (project.title && project.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (project.domain && project.domain.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (project.requiredSkills && project.requiredSkills.some(skill => 
-          skill && skill.toLowerCase().includes(searchQuery.toLowerCase())
-      ));
-  
-  const matchesDomain = !selectedDomain ||
-      (project.domain && project.domain.toLowerCase() === selectedDomain.value);
-  
-  // Remove this condition since selectedExperienceLevel is not defined
-  // const matchesExperience = !selectedExperienceLevel ||
-  //     (project.experienceLevel && project.experienceLevel.toLowerCase() === selectedExperienceLevel.value);
-  
-  const matchesType = !selectedType ||
-      (project.projectType && project.projectType.toLowerCase() === selectedType.value);
-  
-  const matchesSkills = selectedSkills.length === 0 ||
-      selectedSkills.every(selected =>
-          project.requiredSkills && project.requiredSkills.some(skill =>
-              skill && skill.toLowerCase().includes(selected.value)
-          )
+    const matchesSearch =
+      searchQuery === '' ||
+      (project.proTitle && project.proTitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (project.proDes && project.proDes.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (Array.isArray(project.reqProjectDomains) &&
+        project.reqProjectDomains.some(
+          (domain) => domain && domain.toLowerCase().includes(searchQuery.toLowerCase())
+        )) ||
+      (Array.isArray(project.reqSkills) &&
+        project.reqSkills.some(
+          (skill) => skill && skill.toLowerCase().includes(searchQuery.toLowerCase())
+        ));
+
+    const matchesDomain = selectedDomains.length === 0 ||
+      selectedDomains.every((selected) =>
+        Array.isArray(project.reqProjectDomains) &&
+        project.reqProjectDomains.some(
+          (domain) => domain && domain.toLowerCase().includes(selected)
+        )
       );
-  
-  // Remove matchesExperience from the return statement
-  return matchesSearch && matchesDomain && matchesType && matchesSkills;
+
+    const matchesType = !selectedType ||
+      (project.proType && project.proType.toLowerCase() === selectedType.value);
+
+    const matchesSkills = selectedSkills.length === 0 ||
+      selectedSkills.every((selected) =>
+        Array.isArray(project.reqSkills) &&
+        project.reqSkills.some(
+          (skill) => skill && skill.toLowerCase().includes(selected)
+        )
+      );
+
+    // Remove matchesExperience from the return statement
+    return matchesSearch && matchesDomain && matchesType && matchesSkills;
   });
 
   if (isLoading) {
@@ -436,8 +403,8 @@ const FindProjects: React.FC = () => {
             <label className="mb-2 block text-sm font-medium text-gray-200">Domain</label>
             <Select
               options={domainOptions}
-              value={selectedDomain}
-              onChange={setSelectedDomain}
+              value={selectedDomains}
+              onChange={(newValue) => setSelectedDomains(newValue ? [newValue] : [])}
               styles={selectStyles}
               placeholder="Select domain"
               isClearable
@@ -482,13 +449,13 @@ const FindProjects: React.FC = () => {
                   <div className="flex items-center space-x-4">
                     <img
                       src={project.profilePictureUrl}
-                      alt={project.name}
+                      alt={project.fullName}
                       className="h-12 w-12 rounded-full object-cover"
                     />
                     <div>
-                      <h3 className="text-lg font-medium text-white">{project.projectTitle}</h3>
+                      <h3 className="text-lg font-medium text-white">{project.proTitle}</h3>
                       <p className="text-sm text-gray-400">
-                        {project.domain} • {project.projectType} • by {project.name}
+                        {project.reqProjectDomains} • {project.proType} • by {project.fullName}
                       </p>
                     </div>
                   </div>
@@ -523,13 +490,6 @@ const FindProjects: React.FC = () => {
         <ProjectOwnerProfile
           owner={selectedProject}
           onClose={() => setShowProfile(false)}
-          onSendRequest={(e) => {
-            e.stopPropagation();
-            handleSendRequest(selectedProject);
-          }}
-          isPending={getRequestStatus(selectedProject.id)?.status === 'pending'}
-          isAccepted={getRequestStatus(selectedProject.id)?.status === 'accepted'}
-          isRejected={getRequestStatus(selectedProject.id)?.status === 'rejected'}
         />
       )}
 
@@ -538,7 +498,7 @@ const FindProjects: React.FC = () => {
         onClose={() => setShowConfirmDialog(false)}
         onConfirm={confirmRequest}
         title="Send Request"
-        message={`Are you sure you want to send a request to join "${selectedProject?.projectTitle}"?`}
+        message={`Are you sure you want to send a request to join "${selectedProject?.proTitle}"?`}
       />
     </div>
   );

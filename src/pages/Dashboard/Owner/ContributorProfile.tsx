@@ -1,8 +1,10 @@
 import React from 'react';
-import { X, Github, Linkedin, Clock, MapPin, Calendar } from 'lucide-react';
-import { Button } from '../components/Button'
+import { X, Github, Linkedin, Clock, MapPin } from 'lucide-react';
+import { Button } from '../../../components/Button'
+import { Contributor } from '../../../types';
+
 interface ContributorProfileProps {
-  contributor: any;
+  contributor: Contributor;
   onClose: () => void;
   showActions?: boolean;
   onAccept?: () => void;
@@ -30,12 +32,12 @@ export const ContributorProfile: React.FC<ContributorProfileProps> = ({
 
         <div className="mb-6 flex items-center space-x-4">
           <img
-            src={contributor.profilePicture}
-            alt={contributor.name}
+            src={contributor.profilePictureUrl}
+            alt={contributor.fullName}
             className="h-20 w-20 rounded-full object-cover"
           />
           <div>
-            <h2 className="text-2xl font-bold text-white">{contributor.name}</h2>
+            <h2 className="text-2xl font-bold text-white">{contributor.fullName}</h2>
             <p className="text-gray-400">{contributor.email}</p>
           </div>
         </div>
@@ -44,14 +46,16 @@ export const ContributorProfile: React.FC<ContributorProfileProps> = ({
           <div>
             <h3 className="mb-2 text-lg font-semibold text-white">Skills</h3>
             <div className="flex flex-wrap gap-2">
-              {contributor.skills.map((skill: string, index: number) => (
+              {Array.isArray(contributor.skills) ? contributor.skills.map((skill: string, index: number) => (
                 <span
                   key={index}
                   className="rounded-full bg-blue-500/20 px-3 py-1 text-sm text-blue-300"
                 >
                   {skill}
                 </span>
-              ))}
+              )) : (
+                <span className="text-gray-400">No skills listed</span>
+              )}
             </div>
           </div>
 
@@ -62,7 +66,7 @@ export const ContributorProfile: React.FC<ContributorProfileProps> = ({
 
           <div>
             <h3 className="mb-2 text-lg font-semibold text-white">Domain</h3>
-            <p className="text-gray-300">{contributor.preferredDomain}</p>
+            <p className="text-gray-300">{contributor.preferredProjectDomain}</p>
           </div>
 
           <div>
@@ -76,19 +80,19 @@ export const ContributorProfile: React.FC<ContributorProfileProps> = ({
           </div>
 
           <div>
-            <h3 className="mb-2 text-lg font-semibold text-white">Collaboration</h3>
+            <h3 className="mb-2 text-lg font-semibold text-white">Collaboration Type</h3>
             <div className="flex items-center gap-2 text-gray-300">
               <MapPin className="h-4 w-4" />
-              <span>{contributor.preferredCollaboration}</span>
+              <span>{contributor.preferredCollabType}</span>
             </div>
           </div>
 
           <div>
             <h3 className="mb-2 text-lg font-semibold text-white">Links</h3>
             <div className="flex gap-3">
-              {contributor.linkedinUrl && (
+              {contributor.linkedInProfileUrl && (
                 <a
-                  href={contributor.linkedinUrl}
+                  href={contributor.linkedInProfileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-full bg-blue-500/20 p-2 text-blue-300 hover:bg-blue-500/30"
@@ -96,9 +100,9 @@ export const ContributorProfile: React.FC<ContributorProfileProps> = ({
                   <Linkedin className="h-5 w-5" />
                 </a>
               )}
-              {contributor.githubUrl && (
+              {contributor.gitHubProfileUrl && (
                 <a
-                  href={contributor.githubUrl}
+                  href={contributor.gitHubProfileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-full bg-gray-700 p-2 text-white hover:bg-gray-600"
@@ -110,10 +114,10 @@ export const ContributorProfile: React.FC<ContributorProfileProps> = ({
           </div>
         </div>
 
-        {contributor.motivation && (
+        {contributor.whyContribute && (
           <div className="mt-6">
             <h3 className="mb-2 text-lg font-semibold text-white">Motivation</h3>
-            <p className="text-gray-300">{contributor.motivation}</p>
+            <p className="text-gray-300">{contributor.whyContribute}</p>
           </div>
         )}
 

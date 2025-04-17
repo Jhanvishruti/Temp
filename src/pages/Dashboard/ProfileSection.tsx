@@ -1,7 +1,13 @@
+// 
+// 
+// check this file working for both contributor and project owner
+// 
+// 
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { getUserIdFromToken } from '../../services/authService';
-import { Button } from '../Button';
+import { Button } from '../../components/Button';
 
 interface ProfileSectionProps {
   userType: 'contributor' | 'project-owner';

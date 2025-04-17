@@ -3,12 +3,12 @@ import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
 import { getUserRoleFromToken, getTokenFromCookie } from '../../services/authService';
 import { LayoutDashboard, UserCircle, Users, PieChart, ChevronRight, LogOut, Menu, X, Bell, UserPlus } from 'lucide-react';
 import { Button } from '../../components/Button';
-import FindProjects from './FindProjects';
-import FindContributors from './FindContributor';
+import FindProjects from './Contributor/FindProjects';
+import FindContributors from './Owner/FindContributor';
 import { Analytics } from './Analytics';
-import Profile from './Profile';
-import OwnerNotifications from '../Dashboard/OwnerNotification';
-import ContributorNotifications from './ContributorNotifications';
+import Profile from './Owner/Profile';
+import OwnerNotifications from './Owner/OwnerNotification';
+import ContributorNotifications from './Contributor/ContributorNotifications';
 import { ProjectCollaborations } from '../ProjectCollaborations';
 
 interface SidebarItemProps {

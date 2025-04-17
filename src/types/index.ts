@@ -2,39 +2,39 @@
 export interface User {
   id: string;
   profilePictureUrl: string;
-  name: string;
   email: string;
   type: UserType;
 }
 
 export type UserType = 'project-owner' | 'contributor';
 
-export interface ProjectOwnerProfile extends User {
-  projectDescription: ReactNode;
+export interface Owner extends User {
+  fullName: string;
   proTitle: string;
   proDes: string;
-  reqProjectDomain: string;
-  reqSkills: string;
+  reqProjectDomains: string[];
+  reqSkills: string[];
   proType: string;
   collabMode: string;
-  timeNeedValue: number;
+  timeCommitValue: number;
   timeUnit: string;
   hoursPerDay: string;
-  linkedInProfileUrl: string;
-  gitHubProfileUrl: string;
+  linkedInProfileUrl: string | undefined;
+  githubProfileUrl: string | undefined;
   resumeGoogleDriveLink: string;
   compensationType: string;
   addReq: string;
 }
 
-export interface ContributorProfile extends User {
+export interface Contributor extends User {
+  fullName: string;
   preferredProjectDomain: string;
-  skills: string;
   experienceLevel: string;
-  timeCommitmentValue: number;
-  time: string;
-  hoursPerDay: string;
+  skills: string[];
   availability: string;
+  hoursPerDay: string;
+  timeUnit: string;
+  timeCommitmentValue: number;
   preferredCollabType: string;
   linkedInProfileUrl: string;
   gitHubProfileUrl: string;

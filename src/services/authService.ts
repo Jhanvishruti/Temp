@@ -63,7 +63,6 @@ export const getUserType = (): 'contributor' | 'project-owner' | null => {
     } else if (payload.type) {
       return payload.type === 'contributor' ? 'contributor' : 'project-owner';
     }
-    
     return null;
   } catch (error) {
     console.error('Error getting user type:', error);

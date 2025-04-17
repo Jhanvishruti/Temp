@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Button } from "../../components/Button";
-import { ContributorProfile } from "../ContributorProfile";
+import { Button } from "../../../components/Button";
+import { ContributorProfile } from "../Owner/ContributorProfile";
 import axios from "axios";
-import { getUserIdFromToken } from "../../services/authService";
+import { getUserIdFromToken } from "../../../services/authService";
 
 const Notifications: React.FC = () => {
     const [notifications, setNotifications] = useState<any[]>([]);

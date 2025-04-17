@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter } from 'lucide-react';
-import { Button } from '../../components/Button';
+import { Button } from '../../../components/Button';
 import Select from 'react-select';
 import toast from 'react-hot-toast';
-import ConfirmDialog from './ConfirmDialog';
-import { ContributorProfile } from '../ContributorProfile';
-import axios from 'axios';
-import { getUserIdFromToken } from '../../services/authService';
+import ConfirmDialog from '../../../components/ConfirmDialog';
+import { ContributorProfile } from './ContributorProfile';
+import { getUserIdFromToken } from '../../../services/authService';
+import { Contributor as ContributorType } from '../../../types/index';
 
 // Filter options
 const availabilityOptions = [
@@ -39,43 +39,30 @@ const skillOptions = [
     { value: 'figma', label: 'Figma' }
 ];
 
-interface Contributor {
-    id: string;
-    profilePicture: string;
-    name: string;
-    email: string;
-    skills: string[];
-    experienceLevel: string;
-    preferredDomain: string;
-    availability: string;
-    preferredCollaboration: string;
-    hoursPerDay: string;
-    linkedinUrl: string;
-    githubUrl: string;
-    motivation: string;
-    resumeUrl: string;
+interface Contributor extends ContributorType {
+    userId: string;
 }
 
-interface RequestNotification {
-    id: string;
-    contributorId: string;
-    profilePicture: string;
-    name: string;
-    email: string;
-    projectTitle: string;
-    status: 'pending' | 'accepted' | 'rejected';
-    createdAt: Date;
-    expiresAt: Date;
-    skills: string[];
-    experienceLevel: string;
-    preferredDomain: string;
-    availability: string;
-    preferredCollaboration: string;
-    hoursPerDay: string;
-    linkedinUrl: string;
-    githubUrl: string;
-    motivation: string;
-}
+// interface RequestNotification {
+//     id: string;
+//     contributorId: string;
+//     profilePicture: string;
+//     name: string;
+//     email: string;
+//     projectTitle: string;
+//     status: 'pending' | 'accepted' | 'rejected';
+//     createdAt: Date;
+//     expiresAt: Date;
+//     skills: string[];
+//     experienceLevel: string;
+//     preferredDomain: string;
+//     availability: string;
+//     preferredCollaboration: string;
+//     hoursPerDay: string;
+//     linkedinUrl: string;
+//     githubUrl: string;
+//     motivation: string;
+// }
 
 // Replace the static filter options with dynamic ones generated from the data
 
@@ -91,7 +78,6 @@ const FindContributors: React.FC = () => {
     const [domainOptions, setDomainOptions] = useState<any[]>([]);
     const [experienceLevelOptions, setExperienceLevelOptions] = useState<any[]>([]);
     const [skillOptions, setSkillOptions] = useState<any[]>([]);
-    
     const [contributors, setContributors] = useState<Contributor[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -120,19 +106,28 @@ const FindContributors: React.FC = () => {
                 availabilities.add(contributor.availability.toLowerCase());
             }
             
-            if (contributor.preferredDomain) {
-                domains.add(contributor.preferredDomain.toLowerCase());
+            if (contributor.preferredProjectDomain) {
+                domains.add(contributor.preferredProjectDomain.toLowerCase());
             }
             
             if (contributor.experienceLevel) {
                 experienceLevels.add(contributor.experienceLevel.toLowerCase());
             }
+
+
+        ////////////////////////// Here is getting error!! ///////////////////////////////////
+        
+            if (contributor.skills) {
+                contributor.skills.forEach((skill: string) => skills.add(skill.toLowerCase()));
+            }
             
-            contributor.skills.forEach(skill => {
-                if (skill) {
-                    skills.add(skill.toLowerCase());
-                }
-            });
+            // if (Array.isArray(contributor.skills)) {
+            //     contributor.skills.forEach(skill => {
+            //         if (skill) {
+            //             skills.add(skill.toLowerCase());
+            //         }
+            //     });
+            // }
         });
         
         // Convert sets to option arrays for react-select
@@ -162,27 +157,29 @@ const FindContributors: React.FC = () => {
         const fetchContributors = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:5247/api/pcontributor');
+                const response = await fetch('http://localhost:5247/api/pcontributor');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch projects');
+                }
+                var data = await response.json();
                 
                 // Map the backend data to match our frontend structure if needed
-                const mappedContributors = response.data.map((contributor: any) => ({
-                    id: contributor.userId,
-                    profilePicture: contributor.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80', // Default image if none provided
-                    name: contributor.name,
-                    email: contributor.email,
-                    skills: contributor.skills ? contributor.skills.split(',').map((s: string) => s.trim()) : [],
+                const mappedContributors = data.map((contributor: Contributor) => ({
+                    userId: contributor.userId,
+                    profilePicture: contributor.profilePictureUrl || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80', // Default image if none provided
+                    name: contributor.fullName,
+                    skills: contributor.skills ? contributor.skills : [],
                     experienceLevel: contributor.experienceLevel,
-                    preferredDomain: contributor.preferredDomain,
+                    preferredDomain: contributor.preferredProjectDomain,
                     availability: contributor.availability,
-                    preferredCollaboration: contributor.preferredCollaboration,
+                    preferredCollaboration: contributor.preferredCollabType,
                     hoursPerDay: contributor.hoursPerDay,
-                    linkedinUrl: contributor.linkedinUrl,
-                    githubUrl: contributor.githubUrl,
-                    motivation: contributor.motivation,
-                    resumeUrl: contributor.resumeUrl
+                    linkedinUrl: contributor.linkedInProfileUrl,
+                    githubUrl: contributor.gitHubProfileUrl,
+                    resumeUrl: contributor.resumeGoogleDriveLink,
+                    motivation: contributor.whyContribute
                 }));
                 console.log(mappedContributors);
-                
                 setContributors(mappedContributors);
                 
                 // Generate dynamic filter options from the data
@@ -201,8 +198,9 @@ const FindContributors: React.FC = () => {
         const fetchPendingRequests = async () => {
             try {
                 var uid = getUserIdFromToken();
-                const response = await axios.get(`http://localhost:5247/api/request/sent/${uid}`);
-                const pendingRequestIds = response.data.map((request: any) => request.receiverId);
+                const response = await fetch(`http://localhost:5247/api/request/sent/${uid}`);
+                const data = await response.json()
+                const pendingRequestIds = data.map((request: any) => request.receiverId);
                 // console.log(pendingRequestIds)
                 setPendingRequests(new Set(pendingRequestIds));
             } catch (err) {
@@ -273,15 +271,26 @@ const FindContributors: React.FC = () => {
 
     const confirmRequest = async () => {
         if (!selectedContributor) return;
-    
+        
+        const requestData = {
+            senderId: getUserIdFromToken(), 
+            receiverId: selectedContributor.id,
+            senderRole: 'powner'
+        }
+        console.log(requestData)
         try {
             // Send request to the API
-            await axios.post('http://localhost:5247/api/request/send', {
-                senderId: getUserIdFromToken(), 
-                receiverId: selectedContributor.id,
-                senderRole: 'powner'
+            const response = await fetch('http://localhost:5247/api/request/send', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
             });
-    
+
+            if(!response.ok){
+                throw new Error('Failed to send request');
+            }
             // Update UI state
             setPendingRequests(prev => new Set([...prev, selectedContributor.id]));
             toast.success(`Request sent to ${selectedContributor.name}`);
@@ -291,13 +300,11 @@ const FindContributors: React.FC = () => {
             toast.error('Failed to send request. Please try again.');
         }
     };
-    
-    
 
     // Update the filteredContributors function to handle undefined values
     const filteredContributors = contributors.filter((contributor) => {
         const matchesSearch = searchQuery === '' ||
-            (contributor.name && contributor.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (contributor.fullName && contributor.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (contributor.experienceLevel && contributor.experienceLevel.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (contributor.skills && contributor.skills.some(skill => skill && skill.toLowerCase().includes(searchQuery.toLowerCase())));
     
@@ -305,7 +312,7 @@ const FindContributors: React.FC = () => {
             (contributor.availability && contributor.availability.toLowerCase() === selectedAvailability.value);
     
         const matchesDomain = !selectedDomain ||
-            (contributor.preferredDomain && contributor.preferredDomain.toLowerCase().includes(selectedDomain.value));
+            (contributor.preferredProjectDomain && contributor.preferredProjectDomain.toLowerCase().includes(selectedDomain.value));
     
         const matchesExperience = !selectedExperienceLevel ||
             (contributor.experienceLevel && contributor.experienceLevel.toLowerCase() === selectedExperienceLevel.value);
@@ -418,14 +425,14 @@ const FindContributors: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-4">
                                     <img
-                                        src={contributor.profilePicture}
-                                        alt={contributor.name}
+                                        src={contributor.profilePictureUrl}
+                                        alt={contributor.fullName}
                                         className="h-12 w-12 rounded-full object-cover"
                                     />
                                     <div>
-                                        <h3 className="text-lg font-medium text-white">{contributor.name}</h3>
+                                        <h3 className="text-lg font-medium text-white">{contributor.fullName}</h3>
                                         <p className="text-sm text-gray-400">
-                                            {contributor.experienceLevel} • {contributor.availability} • {contributor.preferredDomain}
+                                            {contributor.experienceLevel} • {contributor.availability} • {contributor.preferredProjectDomain}
                                         </p>
                                     </div>
                                 </div>
