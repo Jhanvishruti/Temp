@@ -114,20 +114,27 @@ const FindContributors: React.FC = () => {
                 experienceLevels.add(contributor.experienceLevel.toLowerCase());
             }
 
-
-        ////////////////////////// Here is getting error!! ///////////////////////////////////
-        
+            // Fix for the skills forEach error
             if (contributor.skills) {
-                contributor.skills.forEach((skill: string) => skills.add(skill.toLowerCase()));
+                // Check if skills is an array
+                if (Array.isArray(contributor.skills)) {
+                    contributor.skills.forEach((skill: string) => {
+                        if (skill) {
+                            skills.add(skill.toLowerCase());
+                        }
+                    });
+                } 
+                // If skills is a string, split it and add each skill
+                else if (typeof contributor.skills === 'string') {
+                    const skillsString = contributor.skills as string;
+                    skillsString.split(',')
+                        .map((skill: string) => skill.trim())
+                        .filter((skill: string) => skill !== '')
+                        .forEach((skill: string) => {
+                            skills.add(skill.toLowerCase());
+                        });
+                }
             }
-            
-            // if (Array.isArray(contributor.skills)) {
-            //     contributor.skills.forEach(skill => {
-            //         if (skill) {
-            //             skills.add(skill.toLowerCase());
-            //         }
-            //     });
-            // }
         });
         
         // Convert sets to option arrays for react-select
@@ -166,11 +173,17 @@ const FindContributors: React.FC = () => {
                 // Map the backend data to match our frontend structure if needed
                 const mappedContributors = data.map((contributor: Contributor) => ({
                     userId: contributor.userId,
-                    profilePicture: contributor.profilePictureUrl || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80', // Default image if none provided
-                    name: contributor.fullName,
+                    id: contributor.id,
+                    // Handle Base64 profile picture correctly
+                    profilePictureUrl: contributor.profilePictureUrl 
+                        ? contributor.profilePictureUrl.startsWith('data:') 
+                            ? contributor.profilePictureUrl 
+                            : `data:image/jpeg;base64,${contributor.profilePictureUrl}`
+                        : 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80', // Default image if none provided
+                    fullName: contributor.fullName,
                     skills: contributor.skills ? contributor.skills : [],
                     experienceLevel: contributor.experienceLevel,
-                    preferredDomain: contributor.preferredProjectDomain,
+                    preferredProjectDomain: contributor.preferredProjectDomain,
                     availability: contributor.availability,
                     preferredCollaboration: contributor.preferredCollabType,
                     hoursPerDay: contributor.hoursPerDay,
@@ -272,13 +285,16 @@ const FindContributors: React.FC = () => {
     const confirmRequest = async () => {
         if (!selectedContributor) return;
         
-        const requestData = {
-            senderId: getUserIdFromToken(), 
-            receiverId: selectedContributor.id,
-            senderRole: 'powner'
-        }
-        console.log(requestData)
         try {
+            // Fix: Convert userId to string since the API expects string IDs
+            const requestData = {
+                senderId: getUserIdFromToken().toString(), // Convert number to string
+                receiverId: selectedContributor.userId, // Keep as string
+                senderRole: "Powner"
+            };
+            
+            console.log("Sending request data:", requestData);
+            
             // Send request to the API
             const response = await fetch('http://localhost:5247/api/request/send', {
                 method: "POST",
@@ -287,13 +303,16 @@ const FindContributors: React.FC = () => {
                 },
                 body: JSON.stringify(requestData)
             });
-
+    
             if(!response.ok){
+                const errorData = await response.json().catch(() => null);
+                console.error('API error response:', errorData);
                 throw new Error('Failed to send request');
             }
+            
             // Update UI state
             setPendingRequests(prev => new Set([...prev, selectedContributor.id]));
-            toast.success(`Request sent to ${selectedContributor.name}`);
+            toast.success(`Request sent to ${selectedContributor.fullName}`);
             setShowConfirmDialog(false);
         } catch (error) {
             console.error('Error sending request:', error);
@@ -306,7 +325,13 @@ const FindContributors: React.FC = () => {
         const matchesSearch = searchQuery === '' ||
             (contributor.fullName && contributor.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (contributor.experienceLevel && contributor.experienceLevel.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (contributor.skills && contributor.skills.some(skill => skill && skill.toLowerCase().includes(searchQuery.toLowerCase())));
+            (contributor.skills && (
+                Array.isArray(contributor.skills) 
+                    ? contributor.skills.some(skill => skill && skill.toLowerCase().includes(searchQuery.toLowerCase()))
+                    : typeof contributor.skills === 'string'
+                        ? (contributor.skills as string).toLowerCase().includes(searchQuery.toLowerCase())
+                        : false
+            ));
     
         const matchesAvailability = !selectedAvailability ||
             (contributor.availability && contributor.availability.toLowerCase() === selectedAvailability.value);
@@ -318,11 +343,19 @@ const FindContributors: React.FC = () => {
             (contributor.experienceLevel && contributor.experienceLevel.toLowerCase() === selectedExperienceLevel.value);
     
         const matchesSkills = selectedSkills.length === 0 ||
-            selectedSkills.every(selected =>
-                contributor.skills && contributor.skills.some(skill =>
-                    skill && skill.toLowerCase().includes(selected.value)
-                )
-            );
+            selectedSkills.every(selected => {
+                if (!contributor.skills) return false;
+                
+                if (Array.isArray(contributor.skills)) {
+                    return contributor.skills.some(skill => 
+                        skill && skill.toLowerCase().includes(selected.value)
+                    );
+                } else if (typeof contributor.skills === 'string') {
+                    return (contributor.skills as string).toLowerCase().includes(selected.value);
+                }
+                
+                return false;
+            });
     
         return matchesSearch && matchesAvailability && matchesDomain &&
             matchesExperience && matchesSkills;
@@ -453,14 +486,29 @@ const FindContributors: React.FC = () => {
                             </div>
                             <div className="mt-4">
                                 <div className="flex flex-wrap gap-2">
-                                    {contributor.skills.map((skill: string, index: number) => (
-                                        <span
-                                            key={index}
-                                            className="rounded-full bg-blue-500/20 px-3 py-1 text-sm text-blue-300"
-                                        >
-                                            {skill}
-                                        </span>
-                                    ))}
+                                    {Array.isArray(contributor.skills) 
+                                        ? contributor.skills.map((skill: string, index: number) => (
+                                            <span
+                                                key={index}
+                                                className="rounded-full bg-blue-500/20 px-3 py-1 text-sm text-blue-300"
+                                            >
+                                                {skill}
+                                            </span>
+                                        ))
+                                        : typeof contributor.skills === 'string' 
+                                            ? (contributor.skills as string).split(',')
+                                                .map((skill: string, index: number) => skill.trim())
+                                                .filter(Boolean)
+                                                .map((skill: string, index: number) => (
+                                                    <span
+                                                        key={index}
+                                                        className="rounded-full bg-blue-500/20 px-3 py-1 text-sm text-blue-300"
+                                                    >
+                                                        {skill}
+                                                    </span>
+                                                ))
+                                            : null
+                                    }
                                 </div>
                             </div>
                         </div>

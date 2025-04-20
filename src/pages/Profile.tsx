@@ -1,10 +1,10 @@
 import { Edit2, Save, Github, Linkedin, Loader2 } from "lucide-react";
-import { Contributor, Owner } from "../../../types";
-import { Button } from "../../../components/Button";
+import { Contributor, Owner } from "../types";
+import { Button } from "../components/Button";
 import toast from "react-hot-toast";
 import { useState, ChangeEvent, useEffect } from "react";
-import { getUserProfile, updateUserProfile } from "../../../services/api";
-import { getUserIdFromToken, getUserRoleFromToken } from "../../../services/authService";
+import { getUserProfile, updateUserProfile } from "../services/api";
+import { getUserIdFromToken, getUserRoleFromToken } from "../services/authService";
 
 const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -558,8 +558,8 @@ const Profile: React.FC = () => {
           <div className="space-y-2">
             <input
               type="text"
-              name="name"
-              value={getValueOrDefault(profileData, 'name', '')}
+              name="fullName"
+              value={getValueOrDefault(profileData, 'fullName', '')}
               onChange={handleInputChange}
               disabled={!isEditing}
               className="block text-lg font-medium text-white bg-transparent border-b border-transparent focus:border-gray-500 outline-none disabled:border-transparent"
@@ -575,8 +575,8 @@ const Profile: React.FC = () => {
           </div>
         </div>
 
-        {/* Check if it's a contributor profile based on the type property */}
-        {(profileData as any).type === 'contributor'
+        {/* Check if it's a contributor profile based on the userType */}
+        {userType.toLowerCase() === 'pcontributor'
           ? renderContributorProfile(profileData as Contributor)
           : renderProjectOwnerProfile(profileData as Owner)
         }

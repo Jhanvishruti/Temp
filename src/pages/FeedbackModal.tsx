@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import ReactStars from 'react-stars';
+// @ts-ignore
+import ReactStars from 'react-Rating-stars-component';
 import { X } from 'lucide-react';
 import { Button } from '../components/Button';
 
 interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (feedback: { rating: number; comment: string }) => void;
+  onSubmit: (feedback: { Rating: number; Comments: string }) => void;
   contributorName: string;
 }
 
@@ -16,16 +17,16 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   onSubmit,
   contributorName,
 }) => {
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [Rating, setRating] = useState(0);
+  const [Comments, setComments] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ rating, comment });
+    onSubmit({ Rating, Comments });
     setRating(0);
-    setComment('');
+    setComments('');
   };
 
   return (
@@ -51,11 +52,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
             <div className="mt-2">
               <ReactStars
                 count={5}
-                value={rating}
+                value={Rating}
                 onChange={setRating}
                 size={24}
-                color2="#60A5FA"
-                half={false}
+                activeColor="#60A5FA"
+                isHalf={false}
               />
             </div>
           </div>
@@ -65,8 +66,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               Your Experience
             </label>
             <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              value={Comments}
+              onChange={(e) => setComments(e.target.value)}
               rows={4}
               className="mt-2 w-full rounded-lg border border-gray-600 bg-black/20 px-4 py-2 text-white placeholder-gray-400"
               placeholder="Share your experience working with this contributor..."

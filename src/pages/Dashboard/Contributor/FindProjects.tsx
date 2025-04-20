@@ -7,6 +7,8 @@ import ConfirmDialog from '../../../components/ConfirmDialog';
 import { ProjectOwnerProfile } from './ProjectOwnerProfile';
 import { getUserIdFromToken } from '../../../services/authService';
 import { Owner } from '../../../types';
+// Remove the unused import
+// import { SearchBar } from '../../../components/SearchBar';
 
 interface OwnerProfile extends Owner {
   userId: any;
@@ -127,6 +129,12 @@ const FindProjects: React.FC = () => {
           ...project,
           fullName: project.fullName || '',  // Ensure fullName is set
           userId: project.userId,            // Set userId to the project's id
+          // Handle Base64 profile picture correctly
+          profilePictureUrl: project.profilePictureUrl 
+            ? project.profilePictureUrl.startsWith('data:') 
+              ? project.profilePictureUrl 
+              : `data:image/jpeg;base64,${project.profilePictureUrl}`
+            : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e', // Default image only if none provided
           projectTitle: project.proTitle,
           projectDescription: project.proDes,
           title: project.proTitle,       // Set title to match projectTitle
@@ -400,34 +408,29 @@ const FindProjects: React.FC = () => {
       {showFilters && (
         <div className="grid gap-4 rounded-lg border border-gray-700 bg-black/20 p-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-200">Domain</label>
+            <label className="mb-2 block text-sm font-medium text-gray-200">Project Domain</label>
             <Select
+              isMulti
               options={domainOptions}
-              value={selectedDomains}
-              onChange={(newValue) => setSelectedDomains(newValue ? [newValue] : [])}
+              value={domainOptions.filter(option => selectedDomains.includes(option.value))}
+              onChange={(selected) => {
+                setSelectedDomains(selected ? selected.map(item => item.value) : []);
+              }}
               styles={selectStyles}
               placeholder="Select domain"
               isClearable
             />
           </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-200">Project Type</label>
-            <Select
-              options={typeOptions}
-              value={selectedType}
-              onChange={setSelectedType}
-              styles={selectStyles}
-              placeholder="Select type"
-              isClearable
-            />
-          </div>
+          
           <div className="md:col-span-2">
             <label className="mb-2 block text-sm font-medium text-gray-200">Required Skills</label>
             <Select
               isMulti
               options={skillOptions}
-              value={selectedSkills}
-              onChange={(newValue) => setSelectedSkills([...newValue])}
+              value={skillOptions.filter(option => selectedSkills.includes(option.value))}
+              onChange={(selected) => {
+                setSelectedSkills(selected ? selected.map(item => item.value) : []);
+              }}
               styles={selectStyles}
               placeholder="Select required skills"
             />
@@ -439,6 +442,8 @@ const FindProjects: React.FC = () => {
         {filteredProjects.length > 0 ? (
           filteredProjects.map((project) => {
             const status = getRequestStatus(project.id);
+            const isPending = pendingRequests.has(project.id);
+            
             return (
               <div
                 key={project.id}
@@ -457,13 +462,16 @@ const FindProjects: React.FC = () => {
                       <p className="text-sm text-gray-400">
                         {project.reqProjectDomains} • {project.proType} • by {project.fullName}
                       </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {project.collabMode || 'Remote'} • {project.timeCommitValue || 'Flexible'}
+                      </p>
                     </div>
                   </div>
                   {status?.status === 'accepted' ? (
                     <span className="text-green-400">Request Accepted</span>
                   ) : status?.status === 'rejected' ? (
                     <span className="text-red-400">Request Rejected</span>
-                  ) : status?.status === 'pending' ? (
+                  ) : isPending ? (
                     <span className="text-yellow-400">Request Pending</span>
                   ) : (
                     <Button

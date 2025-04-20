@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
-import { getUserRoleFromToken, getTokenFromCookie } from '../../services/authService';
+import { getUserRoleFromToken, getTokenFromCookie, getUserIdFromToken } from '../../services/authService';
 import { LayoutDashboard, UserCircle, Users, PieChart, ChevronRight, LogOut, Menu, X, Bell, UserPlus } from 'lucide-react';
 import { Button } from '../../components/Button';
 import FindProjects from './Contributor/FindProjects';
 import FindContributors from './Owner/FindContributor';
 import { Analytics } from './Analytics';
-import Profile from './Owner/Profile';
+import Profile from '../Profile';
 import OwnerNotifications from './Owner/OwnerNotification';
 import ContributorNotifications from './Contributor/ContributorNotifications';
 import { ProjectCollaborations } from '../ProjectCollaborations';
+import { getUserProfile } from '../../services/api';
+import { Contributor, Owner } from '../../types';
+import toast from 'react-hot-toast';
+import { FeedbackModal } from '../FeedbackModal';
 
 interface SidebarItemProps {
   icon: React.ReactNode;
@@ -55,12 +59,44 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm })
   );
 };
 
+// Update the Dashboard component
 export const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isProjectOwner, setIsProjectOwner] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileData, setProfileData] = useState<Contributor | Owner>();
+  
+  // Add these state variables INSIDE the component
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [selectedCollaboration, setSelectedCollaboration] = useState<any>(null);
+
+  // Retrieve userType and userId from auth cookie
+  const userType = getUserRoleFromToken() || "Powner";
+  const userId = getUserIdFromToken();
+
+  // Add these functions INSIDE the component
+  const handleEndCollaboration = (collaboration: any) => {
+    setSelectedCollaboration(collaboration);
+    setShowFeedbackModal(true);
+  };
+
+  const handleFeedbackSubmit = async (feedback: { rating: number; comment: string }) => {
+    // Your feedback submission logic here
+    try {
+      // Example API call to submit feedback
+      // await axios.post(`/api/collaborations/${selectedCollaboration.id}/feedback`, feedback);
+      toast.success('Feedback submitted successfully');
+    } catch (error) {
+      toast.error('Failed to submit feedback');
+      console.error('Error submitting feedback:', error);
+    } finally {
+      setShowFeedbackModal(false);
+      setSelectedCollaboration(null);
+    }
+  };
 
   useEffect(() => {
     const token = getTokenFromCookie();
@@ -71,7 +107,28 @@ export const Dashboard = () => {
 
     const role = getUserRoleFromToken();
     setIsProjectOwner(role === 'Powner');
-  }, [navigate]);
+    
+    // Fetch user profile data using the same approach as in Profile.tsx
+    const fetchProfile = async () => {
+      try {
+        const data = await getUserProfile(userType, userId.toString());
+        setProfileData(data);
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        toast.error('Failed to load profile');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProfile();
+  }, [navigate, userType, userId]);
+
+  // Helper function from Profile.tsx to safely access profile properties
+  const getValueOrDefault = (obj: any, key: string, defaultValue: any = '') => {
+    if (!obj) return defaultValue;
+    return obj[key] !== undefined && obj[key] !== null ? obj[key] : defaultValue;
+  };
 
   const handleLogout = () => setShowLogoutModal(true);
   const confirmLogout = () => {
@@ -96,7 +153,8 @@ export const Dashboard = () => {
           </div>
           <h1 className="text-xl font-bold text-white">Dashboard</h1>
         </div>
-
+        
+        {/* Navigation menu - removed duplicate profile section */}
         <nav className="space-y-2">
           <SidebarItem icon={<UserCircle className="h-5 w-5" />} label="My Profile" active={location.pathname === '/dashboard/profile'} onClick={() => navigate('/dashboard/profile')} />
           <SidebarItem icon={<Bell className="h-5 w-5" />} label="Notifications" active={location.pathname === '/dashboard/notifications'} onClick={() => navigate('/dashboard/notifications')} />
@@ -123,7 +181,15 @@ export const Dashboard = () => {
           <Route path="find-contributors" element={<FindContributors />} />
           <Route path="find-projects" element={<FindProjects />} />
           <Route path="notifications" element={isProjectOwner ? <OwnerNotifications /> : <ContributorNotifications />} />
-          <Route path="collaborations" element={<ProjectCollaborations />} />
+          <Route 
+            path="collaborations" 
+            element={
+              <ProjectCollaborations 
+                isProjectOwner={isProjectOwner} 
+                onEndCollaboration={handleEndCollaboration} 
+              />
+            } 
+          />
           <Route path="*" element={<div className="rounded-xl bg-white/5 p-6 backdrop-blur-lg">
             <h2 className="text-2xl font-bold text-white">Welcome!</h2>
             <p className="mt-2 text-gray-400">{isProjectOwner ? "Manage your projects and find talented contributors." : "Discover exciting projects and showcase your skills."}</p>
@@ -132,6 +198,18 @@ export const Dashboard = () => {
       </div>
 
       <LogoutModal isOpen={showLogoutModal} onClose={() => setShowLogoutModal(false)} onConfirm={confirmLogout} />
+      
+      {/* Use the imported FeedbackModal component */}
+      {selectedCollaboration && (
+        <FeedbackModal 
+          isOpen={showFeedbackModal} 
+          onClose={() => setShowFeedbackModal(false)} 
+          onSubmit={(feedback: { Rating: number; Comments: string }) => {
+            handleFeedbackSubmit({ rating: feedback.Rating, comment: feedback.Comments });
+          }}
+          contributorName={selectedCollaboration.contributorName || 'Contributor'}
+        />
+      )}
     </div>
   );
 };
